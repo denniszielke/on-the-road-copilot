@@ -3,10 +3,10 @@ from typing import Any
 
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
-from azure.search.documents.aio import SearchClient
-from azure.search.documents.models import VectorizableTextQuery
+#from azure.search.documents.aio import SearchClient
+#from azure.search.documents.models import VectorizableTextQuery
 
-from rtmt import RTMiddleTier, Tool, ToolResult, ToolResultDirection
+from backend.rtmt import RTMiddleTier, Tool, ToolResult, ToolResultDirection
 
 async def _generate_report_tool(args: Any) -> ToolResult:
     report = {
