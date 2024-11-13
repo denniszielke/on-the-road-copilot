@@ -13,13 +13,12 @@ from backend.rtmt import RTMiddleTier, Tool
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voicerag")
 
-
 async def create_app():
     if not os.environ.get("RUNNING_IN_PRODUCTION"):
         logger.info("Running in development mode, loading from .env file")
         load_dotenv()
     llm_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-    llm_deployment = os.environ.get("AZURE_OPENAI_REALTIME_DEPLOYMENT")
+    llm_deployment = os.environ.get("AZURE_OPENAI_COMPLETION_DEPLOYMENT_NAME")
     llm_key = os.environ.get("AZURE_OPENAI_API_KEY")
 
     credential = None
@@ -71,8 +70,7 @@ async def create_app():
 
     return app
 
-
 if __name__ == "__main__":
-    host = "localhost"
-    port = 8765
+    host = os.environ.get("HOST", "localhost")
+    port = int(os.environ.get("PORT", 8765))
     web.run_app(create_app(), host=host, port=port)

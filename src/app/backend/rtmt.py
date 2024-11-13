@@ -137,6 +137,7 @@ class RTMiddleTier:
                         })
                     if "response" in message:
                         replace = False
+                        # print(message)
                         for i, output in enumerate(reversed(message["response"]["output"])):
                             if output["type"] == "function_call":
                                 message["response"]["output"].pop(i)
