@@ -7,12 +7,18 @@ let websocket = null;
 let audioContext = null;
 let mediaStream = null;
 let mediaProcessor = null;
-let audioBuffers = [];
+let audioQueueTime = 0;
 
 async function startRecording() {
     isRecording = true;
     toggleButton.textContent = 'Stop Conversation';
     statusMessage.textContent = 'Recording...';
+
+    // Initialize AudioContext if not already done
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        audioQueueTime = audioContext.currentTime;
+    }
 
     // Open WebSocket connection
     websocket = new WebSocket(`ws://${window.location.host}/realtime`);
@@ -49,7 +55,6 @@ async function startRecording() {
     };
 
     // Start recording audio
-    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const source = audioContext.createMediaStreamSource(mediaStream);
 
@@ -82,11 +87,6 @@ function stopRecording() {
         mediaProcessor.onaudioprocess = null;
     }
 
-    if (audioContext) {
-        audioContext.close();
-        audioContext = null;
-    }
-
     if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
         mediaStream = null;
@@ -96,6 +96,8 @@ function stopRecording() {
         websocket.close();
         websocket = null;
     }
+
+    // Do not close the audioContext here; we'll manage it separately
 }
 
 function onToggleListening() {
@@ -150,6 +152,7 @@ function playAudio(base64Audio) {
     // Create an AudioBuffer and play it
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        audioQueueTime = audioContext.currentTime;
     }
 
     const audioBuffer = audioContext.createBuffer(1, float32Array.length, 24000);
@@ -158,7 +161,18 @@ function playAudio(base64Audio) {
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
-    source.start();
+
+    // Schedule the audio chunk to play at the correct time
+    const currentTime = audioContext.currentTime;
+    const startTime = Math.max(audioQueueTime, currentTime + 0.1); // Slight delay to prevent overlap
+    source.start(startTime);
+
+    // Update the audioQueueTime to the end of this buffer
+    audioQueueTime = startTime + audioBuffer.duration;
+
+    source.onended = () => {
+        // Handle when audio chunk finishes playing if needed
+    };
 }
 
 function displayReport(report) {
@@ -187,7 +201,7 @@ function int16ToFloat32(int16Array) {
     const float32Array = new Float32Array(int16Array.length);
     for (let i = 0; i < int16Array.length; i++) {
         let int = int16Array[i];
-        // If the high bit is on, then it is a negative number, and actually counts backwards.
+        // Convert back to float
         let float = int < 0 ? int / 0x8000 : int / 0x7FFF;
         float32Array[i] = float;
     }
