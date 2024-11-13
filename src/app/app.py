@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from backend.tools import _generate_report_tool, _generate_report_tool_schema
 from backend.rtmt import RTMiddleTier, Tool
 
+from acs.caller import OutboundCall
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voicerag")
 
@@ -53,6 +55,16 @@ async def create_app():
 
     rtmt.attach_to_app(app, "/realtime")
 
+    caller = OutboundCall(
+        os.environ.get("ACS_TARGET_NUMBER"),
+        os.environ.get("ACS_SOURCE_NUMBER"),
+        os.environ.get("ACS_CONNECTION_STRING"),
+        os.environ.get("ACS_CALLBACK_PATH"),
+    )
+    callback_path = os.environ.get("ACS_CALLBACK_PATH")
+    caller.attach_to_app(app, "/acs")
+
+
     # Serve static files and index.html
     current_directory = Path(__file__).parent  # Points to 'app' directory
     static_directory = current_directory / 'static'
@@ -65,8 +77,13 @@ async def create_app():
     async def index(request):
         return web.FileResponse(static_directory / 'index.html')
 
+    async def call(request):
+        await caller.call()
+        return web.Response(text="OK")
+
     app.router.add_get('/', index)
     app.router.add_static('/static/', path=str(static_directory), name='static')
+    app.router.add_post('/call', call)
 
     return app
 

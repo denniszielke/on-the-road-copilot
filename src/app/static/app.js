@@ -1,4 +1,5 @@
 const toggleButton = document.getElementById('toggleButton');
+const callButton = document.getElementById('callButton');
 const statusMessage = document.getElementById('statusMessage');
 const reportDiv = document.getElementById('report');
 
@@ -108,7 +109,22 @@ function onToggleListening() {
     }
 }
 
+function onCallButton() {
+    phonenumber = document.getElementById('phonenumber').value;
+
+    const callDetails = {
+        number: phonenumber
+    };
+
+    theUrl = "http://localhost:8000/call" + phonenumber;
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "POST", theUrl, false );
+    xmlHttp.send( callDetails );
+    return xmlHttp.responseText;   
+}
+
 toggleButton.addEventListener('click', onToggleListening);
+callButton.addEventListener('click', onCallButton);
 
 function handleWebSocketMessage(message) {
     switch (message.type) {
