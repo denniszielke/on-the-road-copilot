@@ -30,22 +30,22 @@ async function startRecording() {
 
     websocket.onopen = () => {
         console.log('WebSocket connection opened');
-        // Send session update with interruption detection settings
+        // Send session update with all required parameters
         const sessionUpdate = {
             type: 'session.update',
             session: {
                 turn_detection: {
                     type: 'server_vad',
-                    silence_duration_ms: 500, // Adjust as needed
-                    threshold: 0.5,           // Adjust if necessary
-                    prefix_padding_ms: 300    // Adjust if necessary
+                    threshold: 0.7,          // Adjust if necessary
+                    prefix_padding_ms: 300,  // Adjust if necessary
+                    silence_duration_ms: 500 // Adjust as needed
                 },
-                audio: {
-                    barge_in: {
-                        enable: true
-                    }
-                }
-                // Include other session parameters as needed
+                // If you want to enable input audio transcription
+                // input_audio_transcription: {
+                //     model: 'whisper-1'
+                // }
+                // Do not include 'tools' and 'tool_choice'; backend will handle them
+                // Other parameters like 'temperature' and 'max_response_output_tokens' can be set here if needed
             }
         };
         websocket.send(JSON.stringify(sessionUpdate));
@@ -170,7 +170,7 @@ function handleWebSocketMessage(message) {
             }
             break;
         case 'error':
-            console.error('Error message from server:', message);
+            console.error('Error message from server:', JSON.stringify(message, null, 2));
             break;
         default:
             console.log('Unhandled message type:', message.type);
