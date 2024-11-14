@@ -10,6 +10,10 @@ let mediaStream = null;
 let mediaProcessor = null;
 let audioQueueTime = 0;
 
+// Variables for client-side VAD (optional)
+let speaking = false;
+const VAD_THRESHOLD = 0.01; // Adjust this threshold as needed
+
 async function startRecording() {
     isRecording = true;
     toggleButton.textContent = 'Stop Conversation';
@@ -26,13 +30,22 @@ async function startRecording() {
 
     websocket.onopen = () => {
         console.log('WebSocket connection opened');
-        // Send session update
+        // Send session update with interruption detection settings
         const sessionUpdate = {
             type: 'session.update',
             session: {
                 turn_detection: {
-                    type: 'server_vad'
+                    type: 'server_vad',
+                    silence_duration_ms: 500, // Adjust as needed
+                    threshold: 0.5,           // Adjust if necessary
+                    prefix_padding_ms: 300    // Adjust if necessary
+                },
+                audio: {
+                    barge_in: {
+                        enable: true
+                    }
                 }
+                // Include other session parameters as needed
             }
         };
         websocket.send(JSON.stringify(sessionUpdate));
@@ -75,6 +88,18 @@ async function startRecording() {
             audio: base64Audio
         };
         websocket.send(JSON.stringify(audioCommand));
+
+        // Optional: Client-side VAD for immediate interruption handling
+        const isUserSpeaking = detectSpeech(inputData);
+        if (isUserSpeaking && !speaking) {
+            speaking = true;
+            console.log('User started speaking');
+            // Stop assistant's audio playback
+            stopAssistantAudio();
+        } else if (!isUserSpeaking && speaking) {
+            speaking = false;
+            console.log('User stopped speaking');
+        }
     };
 }
 
@@ -97,8 +122,6 @@ function stopRecording() {
         websocket.close();
         websocket = null;
     }
-
-    // Do not close the audioContext here; we'll manage it separately
 }
 
 function onToggleListening() {
@@ -110,17 +133,18 @@ function onToggleListening() {
 }
 
 function onCallButton() {
-    phonenumber = document.getElementById('phonenumber').value;
+    const phonenumber = document.getElementById('phonenumber').value;
 
     const callDetails = {
         number: phonenumber
     };
 
-    theUrl = "http://localhost:8000/call" + phonenumber;
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "POST", theUrl, false );
-    xmlHttp.send( callDetails );
-    return xmlHttp.responseText;   
+    const theUrl = `http://localhost:8000/call/${phonenumber}`;
+    const xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("POST", theUrl, false);
+    xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xmlHttp.send(JSON.stringify(callDetails));
+    return xmlHttp.responseText;
 }
 
 toggleButton.addEventListener('click', onToggleListening);
@@ -153,6 +177,8 @@ function handleWebSocketMessage(message) {
     }
 }
 
+let assistantAudioSources = [];
+
 function playAudio(base64Audio) {
     const binary = atob(base64Audio);
     const len = binary.length;
@@ -183,12 +209,29 @@ function playAudio(base64Audio) {
     const startTime = Math.max(audioQueueTime, currentTime + 0.1); // Slight delay to prevent overlap
     source.start(startTime);
 
+    // Keep track of audio sources
+    assistantAudioSources.push(source);
+
     // Update the audioQueueTime to the end of this buffer
     audioQueueTime = startTime + audioBuffer.duration;
 
     source.onended = () => {
-        // Handle when audio chunk finishes playing if needed
+        // Remove source from array when it finishes playing
+        assistantAudioSources = assistantAudioSources.filter(s => s !== source);
     };
+}
+
+function stopAssistantAudio() {
+    // Stop all assistant audio sources
+    assistantAudioSources.forEach(source => {
+        try {
+            source.stop();
+        } catch (e) {
+            console.error('Error stopping audio source:', e);
+        }
+    });
+    assistantAudioSources = [];
+    audioQueueTime = audioContext.currentTime;
 }
 
 function displayReport(report) {
@@ -222,4 +265,14 @@ function int16ToFloat32(int16Array) {
         float32Array[i] = float;
     }
     return float32Array;
+}
+
+function detectSpeech(inputData) {
+    // Calculate the root mean square (RMS) of the inputData
+    let sumSquares = 0;
+    for (let i = 0; i < inputData.length; i++) {
+        sumSquares += inputData[i] * inputData[i];
+    }
+    const rms = Math.sqrt(sumSquares / inputData.length);
+    return rms > VAD_THRESHOLD;
 }
