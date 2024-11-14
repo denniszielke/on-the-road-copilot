@@ -55,14 +55,17 @@ async def create_app():
 
     rtmt.attach_to_app(app, "/realtime")
 
-    caller = OutboundCall(
-        os.environ.get("ACS_TARGET_NUMBER"),
-        os.environ.get("ACS_SOURCE_NUMBER"),
-        os.environ.get("ACS_CONNECTION_STRING"),
-        os.environ.get("ACS_CALLBACK_PATH"),
-    )
-    callback_path = os.environ.get("ACS_CALLBACK_PATH")
-    caller.attach_to_app(app, "/acs")
+    if (os.environ.get("ACS_TARGET_NUMBER") is not None and
+            os.environ.get("ACS_SOURCE_NUMBER") is not None and
+            os.environ.get("ACS_CONNECTION_STRING") is not None and
+            os.environ.get("ACS_CALLBACK_PATH") is not None):
+        caller = OutboundCall(
+            os.environ.get("ACS_TARGET_NUMBER"),
+            os.environ.get("ACS_SOURCE_NUMBER"),
+            os.environ.get("ACS_CONNECTION_STRING"),
+            os.environ.get("ACS_CALLBACK_PATH"),
+        )
+        caller.attach_to_app(app, "/acs")
 
 
     # Serve static files and index.html
@@ -78,8 +81,11 @@ async def create_app():
         return web.FileResponse(static_directory / 'index.html')
 
     async def call(request):
-        await caller.call()
-        return web.Response(text="OK")
+        if (caller is not None):
+            await caller.call()
+            return web.Response(text="Created outbound call")
+        else:
+            return web.Response(text="Outbound calling is not configured")
 
     app.router.add_get('/', index)
     app.router.add_static('/static/', path=str(static_directory), name='static')

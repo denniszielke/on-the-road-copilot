@@ -116,11 +116,12 @@ function onCallButton() {
         number: phonenumber
     };
 
-    theUrl = "http://localhost:8000/call" + phonenumber;
+    theUrl = window.location.href + "call";
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.open( "POST", theUrl, false );
     xmlHttp.send( callDetails );
-    return xmlHttp.responseText;   
+    
+    reportDiv.textContent = xmlHttp.responseText;   
 }
 
 toggleButton.addEventListener('click', onToggleListening);
