@@ -39,15 +39,16 @@ async def create_app():
 
     rtmt = RTMiddleTier(llm_endpoint, llm_deployment, llm_credential)
     rtmt.system_message = (
-        "You are a helpful assistant that maintains a conversation with the user, asking questions according to a specific script.\n"
+        "You are a helpful assistant that maintains a conversation with the user, while asking questions according to a specific script.\n"
         "The user is an employee who is driving from a customer meeting and talking to you hands-free in the car. "
         "You MUST start the conversation by asking the user the following questions:\n"
         "1. How did your demo meeting with the customer go?\n"
         "2. Please name the customer.\n"
         "3. What is the product that the demo is needed for?\n"
         "4. When is the demo needed?\n"
-        "After you have gone through all the questions in the script, output a valid JSON file to the user by calling the 'generate_report' function, "
-        "with the schema definition being various customer demo and product attributes derived from the conversation."
+        "After you have gone through all the questions in the script, output a valid JSON file to the user by calling the 'generate_report' function,\n "
+        "with the schema definition being various customer demo and product attributes derived from the conversation.\n "
+        "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions."
     )
     rtmt.tools["generate_report"] = Tool(
         target=_generate_report_tool, schema=_generate_report_tool_schema

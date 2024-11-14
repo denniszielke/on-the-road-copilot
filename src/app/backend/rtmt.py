@@ -163,6 +163,7 @@ class RTMiddleTier:
                         session["disable_audio"] = self.disable_audio
                     session["tool_choice"] = "auto" if len(self.tools) > 0 else "none"
                     session["tools"] = [tool.schema for tool in self.tools.values()]
+                    message["session"] = session
                     updated_message = json.dumps(message)
 
         return updated_message
