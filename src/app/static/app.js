@@ -139,12 +139,13 @@ function onCallButton() {
         number: phonenumber
     };
 
-    const theUrl = `http://localhost:8000/call/${phonenumber}`;
-    const xmlHttp = new XMLHttpRequest();
-    xmlHttp.open("POST", theUrl, false);
-    xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    xmlHttp.send(JSON.stringify(callDetails));
-    return xmlHttp.responseText;
+
+    theUrl = window.location.href + "call";
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "POST", theUrl, false );
+    xmlHttp.send( callDetails );
+    
+    reportDiv.textContent = xmlHttp.responseText;   
 }
 
 toggleButton.addEventListener('click', onToggleListening);
