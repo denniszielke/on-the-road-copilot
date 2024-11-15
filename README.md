@@ -1,5 +1,9 @@
 # on-the-road-copilot
 
+A copilot that process voice input into structured reports:
+
+![architecture.png](./architecture.png)
+
 ## How to set up azure environment
 
 The following values should work:
