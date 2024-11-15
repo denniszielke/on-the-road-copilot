@@ -7,7 +7,7 @@ from azure.core.credentials import AzureKeyCredential
 from azure.identity import AzureDeveloperCliCredential, DefaultAzureCredential
 from dotenv import load_dotenv
 
-from backend.tools import _generate_report_tool, _generate_report_tool_schema
+from backend.tools import _generate_report_tool, _generate_report_tool_schema, _validate_input_tool, _validate_input_tool_schema
 from backend.rtmt import RTMiddleTier, Tool
 
 from acs.caller import OutboundCall
@@ -46,12 +46,33 @@ async def create_app():
         "2. Please name the customer.\n"
         "3. What is the product that the demo is needed for?\n"
         "4. When is the demo needed?\n"
-        "After you have gone through all the questions in the script, output a valid JSON file to the user by calling the 'generate_report' function,\n "
-        "with the schema definition being various customer demo and product attributes derived from the conversation.\n "
-        "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions."
+        "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions.\n"
+        "Make sure you ask the questions in the correct order and that you ask all the questions in the script.\n"
+        "For each input provided by a user you MUST validate the input using the validate_input tool to verify that the value is valid.\n"
+        "If the input is not valid you should ask the user again until you are given valid input. You should repeat until you are receiving valid input. \n"
     )
-    rtmt.tools["generate_report"] = Tool(
-        target=_generate_report_tool, schema=_generate_report_tool_schema
+    
+    # rtmt.system_message = (
+    #     "You are a helpful assistant that maintains a conversation with the user, while asking questions according to a specific script.\n"
+    #     "The user is an employee who is driving from a customer meeting and talking to you hands-free in the car. "
+    #     "You MUST start the conversation by asking the user the following questions:\n"
+    #     "1. How did your demo meeting with the customer go?\n"
+    #     "2. Please name the customer.\n"
+    #     "3. What is the product that the demo is needed for?\n"
+    #     "4. When is the demo needed?\n"
+    #     "After you have gone through all the questions in the script, output a valid JSON file to the user by calling the 'generate_report' function,\n "
+    #     "with the schema definition being various customer demo and product attributes derived from the conversation.\n "
+    #     "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions.\n"
+    #     "Make sure you ask the questions in the correct order and that you ask all the questions in the script.\n"
+    #     "For each input provided by a user you MUST validate the input using the validate_input tool to verify that the value is valid.\n"
+    #     "If the input is not valid you should ask the user again until you are given valid input. You should repeat until you are receiving valid input. \n"
+    # )
+    # rtmt.tools["generate_report"] = Tool(
+    #     target=_generate_report_tool, schema=_generate_report_tool_schema
+    # )
+
+    rtmt.tools["validate_input"] = Tool(
+        target=_validate_input_tool, schema=_validate_input_tool_schema
     )
 
     rtmt.attach_to_app(app, "/realtime")
