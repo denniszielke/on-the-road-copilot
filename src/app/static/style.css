@@ -4,40 +4,77 @@ body {
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
+    background-attachment: fixed;
     color: #333;
     text-align: center;
     margin: 0;
     padding: 0;
 }
 
-.container {
-    margin-top: 50px;
-    background-color: rgba(10, 65, 161, 0);
-    /* Slightly transparent background */
-    display: inline-block;
-    padding: 30px;
+main.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+article {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 2rem;
     border-radius: 10px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 h1 {
     margin-bottom: 30px;
-    color: #2608e7e9;
+    color: #000;
+    font-weight: bold;
+    font-size: 2.5em;
 }
 
-button {
-    padding: 15px 30px;
-    font-size: 18px;
-    background-color: #007bff80;
-    /* Blue color */
-    color: rgb(0, 0, 0);
+.black-button {
+    background-color: #000 !important;
+    color: #fff !important;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
-    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
 }
 
-button:hover {
-    background-color: #1800b347;
+.black-button:hover {
+    background-color: #333 !important;
+}
+
+#toggleButton {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+form {
+    margin-top: 20px;
+}
+
+form input[type="text"],
+form button {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 10px;
+    display: block;
+}
+
+form input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+}
+
+form button {
+    padding: 10px;
+    font-size: 16px;
 }
 
 #statusMessage {
@@ -45,28 +82,21 @@ button:hover {
     font-size: 16px;
 }
 
+#statusMessage:empty {
+    display: none;
+}
+
 #report {
     margin-top: 30px;
     text-align: left;
-    display: inline-block;
     background-color: rgba(255, 255, 255, 0.9);
     padding: 15px;
     border-radius: 5px;
+    max-width: 600px;
+    margin: 0 auto;
+    display: none;
 }
 
-input[type="text"] {
-    width: 280px;
-    height: 40px;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-top: 10px;
-}
-
-.form-group {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+#report:not(:empty) {
+    display: block;
 }

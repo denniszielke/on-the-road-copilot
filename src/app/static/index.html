@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>On-the-road Copilot</title>
+    <!-- Include Pico.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css" />
+    <!-- Custom Styles -->
     <link rel="stylesheet" href="/static/style.css">
     <!-- Import Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,16 +16,20 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1>On-the-road Copilot</h1>
-        <button id="toggleButton">Start Conversation</button>
-        <div class="form-group">
-            <input type="text" id="phonenumber" placeholder="Enter your phone number here">
-            <button id="callButton">Call my phone</button>
-        </div>
-        <div id="statusMessage"></div>
-        <pre id="report"></pre>
-    </div>
+    <!-- Main Container -->
+    <main class="container">
+        <article>
+            <h1>On-the-road Copilot</h1>
+            <button id="toggleButton" class="black-button">Start Conversation</button>
+            <!-- Updated Form -->
+            <form>
+                <input type="text" id="phonenumber" placeholder="Your phone number here">
+                <button id="callButton" class="black-button">Call my phone</button>
+            </form>
+            <div id="statusMessage"></div>
+            <pre id="report"></pre>
+        </article>
+    </main>
     <script src="/static/app.js"></script>
 </body>
 
