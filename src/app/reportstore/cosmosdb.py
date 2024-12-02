@@ -1,4 +1,6 @@
+import os
 import logging
+import json
 from logging import INFO
 from typing import Any
 from azure.cosmos import CosmosClient, PartitionKey
@@ -14,12 +16,16 @@ class CosmosDBStore:
     cosmos_client: CosmosClient
     logging.basicConfig(level=logging.INFO)
 
-    def insert_departments(self, container_name: str, departments: List[str]):
+    def load_from_file(self, file_path: str):
+        with open(file_path, "r") as file:
+            return json.load(file)
+
+    def insert_departments(self, container_name: str, departments: List[any]):
         self.logger.info("Inserting departments into database")
         try:
             container = self.db.get_container_client(container_name)
             for department in departments:
-                container.create_item( {"id": department, "department": department})
+                container.create_item( department )
         except exceptions.CosmosResourceExistsError as e:
             print("Item already exists.")
             logging.error(e)
@@ -29,15 +35,17 @@ class CosmosDBStore:
 
     def create_container(self, container_name: str):
         self.logger.info("Creating container in database")
+        templates_path = os.path.join(os.path.dirname(__file__), 'templates.json')
+        templates = self.load_from_file(templates_path)
         try:
             container = self.db.get_container_client(container_name)
             self.db.create_container(id=container_name, partition_key=PartitionKey(path="/department"))
             print(f"Container created or returned: {container.id}")
-            self.insert_departments(self, container_name, ["sales", "marketing", "engineering", "finance"])
+            self.insert_departments(container_name, templates)
         except exceptions.CosmosResourceExistsError as e:
             print("Container already exists.")
             logging.error(e)
-            self.insert_departments(container_name, ["sales", "marketing", "engineering", "finance"])
+            self.insert_departments(container_name, templates)
         except exceptions.CosmosHttpResponseError as e:
             print("Request to the Azure Cosmos database service failed.")
             logging.error(e)
