@@ -3,8 +3,6 @@ from typing import Any
 
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
-#from azure.search.documents.aio import SearchClient
-#from azure.search.documents.models import VectorizableTextQuery
 
 from backend.rtmt import RTMiddleTier, Tool, ToolResult, ToolResultDirection
 
@@ -50,8 +48,8 @@ _generate_report_tool_schema = {
 
 _lookup_from_database_schema = {
     "type": "function",
-    "name": "get_schema_from_database",
-    "description": "Looks up the correct schema and the questions that need to be answered for a given department from the Cosmos DB database.",
+    "name": "get_report_fields",
+    "description": "Looks up the required fields for the report for a department and the questions that need to be answered for a given department from the database.",
     "parameters": {
         "type": "object",
         "properties": {

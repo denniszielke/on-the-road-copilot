@@ -28,7 +28,7 @@ class CosmosDBStore:
                 container.create_item( department )
         except exceptions.CosmosResourceExistsError as e:
             print("Item already exists.")
-            logging.error(e)
+            logging.debug(e)
         except exceptions.CosmosHttpResponseError as e:
             print("Request to the Azure Cosmos database service failed.")
             logging.error(e)
@@ -44,7 +44,7 @@ class CosmosDBStore:
             self.insert_departments(container_name, templates)
         except exceptions.CosmosResourceExistsError as e:
             print("Container already exists.")
-            logging.error(e)
+            logging.debug(e)
             self.insert_departments(container_name, templates)
         except exceptions.CosmosHttpResponseError as e:
             print("Request to the Azure Cosmos database service failed.")
@@ -58,7 +58,6 @@ class CosmosDBStore:
         self.container_name = container_name
         self.cosmos_client = CosmosClient(db_host, DefaultAzureCredential())
         self.db = self.cosmos_client.get_database_client(db_name)
-        container = self.db.get_container_client(container_name)
         self.create_container(container_name)
 
     
@@ -77,7 +76,7 @@ class CosmosDBStore:
         except exceptions.CosmosHttpResponseError:
             print("Request to the Azure Cosmos database service failed.")
 
-    async def write_report(args: Any) -> ToolResult:
+    async def write_report(self, args: Any) -> ToolResult:
         report = {
             "customer_name": args["customer_name"],
             "demo_product": args["demo_product"],
@@ -87,6 +86,8 @@ class CosmosDBStore:
         # Return the result to the client
         return ToolResult(report, ToolResultDirection.TO_CLIENT)
 
-    async def get_schema(self, args: Any) -> ToolResult:
-        return await self.get_schema_from_database(args["department"])
+    async def get_report_fields(self,  args: Any) -> ToolResult:
+        print("get_report_fields")
+        deparment = "Sales"
+        return await self.get_schema_from_database(department)
             
