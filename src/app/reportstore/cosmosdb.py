@@ -61,20 +61,26 @@ class CosmosDBStore:
         self.create_container(container_name)
 
     
-    async def get_schema_from_database(self, department: str):
+    async def get_schema_from_database(self, department: str): 
         self.logger.info("Getting schema from database")
         try:
-            container = self.cosmos_client.get_container_client(self, self.container_name)
+            container = self.db.get_container_client(self.container_name)
         
             query = "SELECT * FROM c WHERE c.department = @department"
             parameters = [{"name": "@department", "value": department}]
-            items = container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
-        
-            items_list = [item async for item in items]
+            response = container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
             
-            return items_list
-        except exceptions.CosmosHttpResponseError:
-            print("Request to the Azure Cosmos database service failed.")
+            fields = []
+
+            for item in response:
+                print(json.dumps(item, indent=True))
+                fields.append(item)
+
+            return fields
+        except exceptions.CosmosHttpResponseError as e:
+            print("Retrieval for schema failed")
+            logging.error(e)
+
 
     async def write_report(self, args: Any) -> ToolResult:
         report = {
@@ -86,8 +92,12 @@ class CosmosDBStore:
         # Return the result to the client
         return ToolResult(report, ToolResultDirection.TO_CLIENT)
 
-    async def get_report_fields(self,  args: Any) -> ToolResult:
-        print("get_report_fields")
-        deparment = "Sales"
-        return await self.get_schema_from_database(department)
+    async def get_report_fields(self, args: Any) -> ToolResult:
+        department = args["department"].lower()
+        
+        fields = await self.get_schema_from_database(department)
+
+        print(fields)
+
+        return ToolResult(fields, ToolResultDirection.TO_SERVER)
             

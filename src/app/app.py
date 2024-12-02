@@ -8,7 +8,7 @@ from azure.core.credentials import AzureKeyCredential
 from azure.identity import AzureDeveloperCliCredential, DefaultAzureCredential
 from dotenv import load_dotenv
 
-from backend.tools import _generate_report_tool, _generate_report_tool_schema, _lookup_from_database_schema
+from backend.tools import _generate_report_tool, _generate_report_tool_schema, _get_report_fields_tool_schema
 from backend.rtmt import RTMiddleTier, Tool
 
 from acs.caller import OutboundCall
@@ -78,10 +78,12 @@ async def create_app():
             "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions."
         )
         rtmt.tools["generate_report"] = Tool(
-            target=cosmos.write_report, schema=_generate_report_tool_schema
+            schema=_generate_report_tool_schema,
+            target=lambda args: cosmos.write_report(args),
         )
-        rtmt.tools["get_report_fields"] = Tool(
-            target=cosmos.get_report_fields, schema=_lookup_from_database_schema
+        rtmt.tools["get_questions"] = Tool(
+            schema=_get_report_fields_tool_schema,
+            target=lambda args: cosmos.get_report_fields(args),
         )
     else:
         rtmt.system_message = (

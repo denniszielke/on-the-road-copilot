@@ -46,19 +46,20 @@ _generate_report_tool_schema = {
     }
 }
 
-_lookup_from_database_schema = {
+_get_report_fields_tool_schema = {
     "type": "function",
-    "name": "get_report_fields",
-    "description": "Looks up the required fields for the report for a department and the questions that need to be answered for a given department from the database.",
+    "name": "get_questions",
+    "description": "Search the report database for a set of questions that need to be answered by the user. The knowledge base is in English, translate to and from English if " + \
+                   "needed. Results are returned in JSON format with a set of questions that need to be answered by the user.",
     "parameters": {
         "type": "object",
         "properties": {
             "department": {
                 "type": "string",
-                "description": "The department to which the user belongs."
-            },
+                "description": "The name of the department."
+            }
+        },
         "required": ["department"],
         "additionalProperties": False
-        }
     }
 }
