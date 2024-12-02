@@ -47,3 +47,20 @@ _generate_report_tool_schema = {
         "additionalProperties": False
     }
 }
+
+_lookup_from_database_schema = {
+    "type": "function",
+    "name": "get_schema_from_database",
+    "description": "Looks up the correct schema and the questions that need to be answered for a given department from the Cosmos DB database.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "department": {
+                "type": "string",
+                "description": "The department to which the user belongs."
+            },
+        "required": ["department"],
+        "additionalProperties": False
+        }
+    }
+}
