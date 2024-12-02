@@ -1,16 +1,18 @@
 import logging
 import os
 from pathlib import Path
+import time
 
 from aiohttp import web
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import AzureDeveloperCliCredential, DefaultAzureCredential
 from dotenv import load_dotenv
 
-from backend.tools import _generate_report_tool, _generate_report_tool_schema
+from backend.tools import _generate_report_tool, _generate_report_tool_schema, _get_report_fields_tool_schema
 from backend.rtmt import RTMiddleTier, Tool
 
 from acs.caller import OutboundCall
+from reportstore.cosmosdb import CosmosDBStore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voicerag")
@@ -24,6 +26,8 @@ async def create_app():
     llm_key = os.environ.get("AZURE_OPENAI_API_KEY")
 
     credential = None
+
+    cosmos: CosmosDBStore = None
     if not llm_key:
         if tenant_id := os.environ.get("AZURE_TENANT_ID"):
             logger.info(
@@ -35,26 +39,19 @@ async def create_app():
             credential = DefaultAzureCredential()
     llm_credential = AzureKeyCredential(llm_key) if llm_key else credential
 
+    if (os.environ.get("COSMOSDB_ACCOUNT_ENDPOINT") is not None and
+            os.environ.get("COSMOSDB_DATABASE_NAME") is not None and
+            os.environ.get("COSMOSDB_CONTAINER_NAME") is not None):
+        
+        cosmos = CosmosDBStore(
+            os.environ.get("COSMOSDB_ACCOUNT_ENDPOINT"),
+            os.environ.get("COSMOSDB_DATABASE_NAME"),
+            os.environ.get("COSMOSDB_CONTAINER_NAME"),
+        )    
+
     app = web.Application()
 
     rtmt = RTMiddleTier(llm_endpoint, llm_deployment, llm_credential)
-    rtmt.system_message = (
-        "You are a helpful assistant that maintains a conversation with the user, while asking questions according to a specific script.\n"
-        "The user is an employee who is driving from a customer meeting and talking to you hands-free in the car. "
-        "You MUST start the conversation by asking the user the following questions:\n"
-        "1. How did your demo meeting with the customer go?\n"
-        "2. Please name the customer.\n"
-        "3. What is the product that the demo is needed for?\n"
-        "4. When is the demo needed?\n"
-        "After you have gone through all the questions in the script, output a valid JSON file to the user by calling the 'generate_report' function,\n "
-        "with the schema definition being various customer demo and product attributes derived from the conversation.\n "
-        "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions."
-    )
-    rtmt.tools["generate_report"] = Tool(
-        target=_generate_report_tool, schema=_generate_report_tool_schema
-    )
-
-    rtmt.attach_to_app(app, "/realtime")
 
     if (os.environ.get("ACS_TARGET_NUMBER") is not None and
             os.environ.get("ACS_SOURCE_NUMBER") is not None and
@@ -68,6 +65,44 @@ async def create_app():
         )
         caller.attach_to_app(app, "/acs")
 
+    if (cosmos is not None):
+        rtmt.system_message = (
+            "You are a helpful assistant that maintains a conversation with the user, while asking questions according to a specific set of fields.\n"
+            "The user is an employee who is driving from a customer meeting and talking to you hands-free in the car.\n"
+            "You MUST start the conversation by asking the user the following questions:\n"
+            "1. What is your department name ?\n"
+            "After that you should use the 'get_report_fields' tool to retrieve the required fields from the database for follow up questions\n"
+            "The response from the 'get_report_fields' tool will give you a set of fields that you should fill by asking the user questions.\n"
+            "After you have gone through all the questions in the schema, output a valid JSON file to the user by calling the 'generate_report' function,\n "
+            "with the schema definition being various customer demo and product attributes derived from the conversation.\n "
+            "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions."
+        )
+        rtmt.tools["generate_report"] = Tool(
+            schema=_generate_report_tool_schema,
+            target=lambda args: cosmos.write_report(args),
+        )
+        rtmt.tools["get_questions"] = Tool(
+            schema=_get_report_fields_tool_schema,
+            target=lambda args: cosmos.get_report_fields(args),
+        )
+    else:
+        rtmt.system_message = (
+            "You are a helpful assistant that maintains a conversation with the user, while asking questions according to a specific script.\n"
+            "The user is an employee who is driving from a customer meeting and talking to you hands-free in the car. "
+            "You MUST start the conversation by asking the user the following questions:\n"
+            "1. How did your demo meeting with the customer go?\n"
+            "2. Please name the customer.\n"
+            "3. What is the product that the demo is needed for?\n"
+            "4. When is the demo needed?\n"
+            "After you have gone through all the questions in the script, output a valid JSON file to the user by calling the 'generate_report' function,\n "
+            "with the schema definition being various customer demo and product attributes derived from the conversation.\n "
+            "You must engage the user in a conversation and ask the questions in the script. The user will provide the answers to the questions."
+        )
+        rtmt.tools["generate_report"] = Tool(
+            target=_generate_report_tool, schema=_generate_report_tool_schema
+        )
+        
+    rtmt.attach_to_app(app, "/realtime")
 
     # Serve static files and index.html
     current_directory = Path(__file__).parent  # Points to 'app' directory

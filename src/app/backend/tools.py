@@ -3,8 +3,6 @@ from typing import Any
 
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
-#from azure.search.documents.aio import SearchClient
-#from azure.search.documents.models import VectorizableTextQuery
 
 from backend.rtmt import RTMiddleTier, Tool, ToolResult, ToolResultDirection
 
@@ -44,6 +42,24 @@ _generate_report_tool_schema = {
             }
         },
         "required": ["customer_name", "demo_product", "demo_date", "meeting_feedback"],
+        "additionalProperties": False
+    }
+}
+
+_get_report_fields_tool_schema = {
+    "type": "function",
+    "name": "get_questions",
+    "description": "Search the report database for a set of questions that need to be answered by the user. The knowledge base is in English, translate to and from English if " + \
+                   "needed. Results are returned in JSON format with a set of questions that need to be answered by the user.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "department": {
+                "type": "string",
+                "description": "The name of the department."
+            }
+        },
+        "required": ["department"],
         "additionalProperties": False
     }
 }
