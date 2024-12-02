@@ -14,7 +14,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2 - Copy only necessary files to the runner stage
 FROM python:3.12-slim
 ARG FILENAME
 ARG PORT=8000
@@ -24,4 +23,4 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 COPY . .
 EXPOSE $PORT
-ENTRYPOINT [ "gunicorn", "app:app", "-b $HOST:$POST", "--worker-class aiohttp.GunicornWebWorker", "--reload", "--access-logfile" ]
+ENTRYPOINT [ "gunicorn", "app:create_app", "-b 0.0.0.0:8000", "--worker-class",  "aiohttp.GunicornWebWorker", "--reload", "--access-logfile", "-" ]

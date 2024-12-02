@@ -73,6 +73,14 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
               name: 'COSMOSDB_ACCOUNT_ENDPOINT'
               value: database.properties.documentEndpoint
             }
+            {
+              name: 'COSMOSDB_CONTAINER_NAME'
+              value: 'reports'
+            }
+            {
+              name: 'COSMOSDB_DATABASE_NAME'
+              value: 'mobile'
+            }
           ]
           resources: {
             cpu: json('1')
