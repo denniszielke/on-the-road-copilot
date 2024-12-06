@@ -138,7 +138,14 @@ function onToggleListening() {
 }
 
 function onCallButton() {
+
     const phonenumber = document.getElementById('phonenumber').value;
+
+    if (!phoneNumber.validity.valid) {
+        statusMessage.textContent = "Phone number not valid";
+        // prevent form submission
+        return
+    }
 
     const callDetails = {
         target_number: phonenumber
@@ -313,3 +320,24 @@ window.onload = function() {
         )
         .catch(error => console.error('Error:', error));
 };
+
+const phoneNumber = document.getElementById("phonenumber");
+
+phoneNumber.addEventListener("input", (event) => {
+  if (phoneNumber.validity.typeMismatch) {
+    phoneNumber.setCustomValidity("Please add a valid phone number!");
+  } else {
+    phoneNumber.setCustomValidity("");
+  }
+});
+
+const form = document.getElementById("form");
+
+form.addEventListener("submit", (event) => {
+    // if the email field is invalid
+    if (!phoneNumber.validity.valid) {
+      statusMessage.textContent = "Phone number not valid";
+      // prevent form submission
+      event.preventDefault();
+    }
+  });

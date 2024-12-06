@@ -22,8 +22,8 @@
             <h1>On-the-road Copilot</h1>
             <button id="toggleButton" class="black-button">Start Conversation</button>
             <!-- Updated Form -->
-            <form>
-                <input type="text" id="phonenumber" disabled="true" placeholder="Your phone number here">
+            <form id="form">
+                <input type="text" id="phonenumber" disabled="true" placeholder="Your phone number here" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required>
                 <button id="callButton" disabled="true" class="black-button">Call my phone</button>
             </form>
             <div id="statusMessage"></div>
