@@ -143,4 +143,4 @@ output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.applica
 output APPLICATIONINSIGHTS_NAME string = monitoring.outputs.applicationInsightsName
 output PRINCIPAL_ID string = principalId
 output ACS_CONNECTION_STRING string = acs.outputs.communicationConnectionString
-output ACS_CALLBACK_PATH string = 'http://localhost:8000/acs'
+output ACS_CALLBACK_PATH string = 'localhost:8000'
