@@ -141,7 +141,7 @@ async def create_app():
             if (source_number != ''):
                 acs_status['status'] = "ACS enabled with number " + source_number    
                 acs_status['outbound_calling_enabled'] = True
-                acs_status['inbound_calling_enabled'] = True
+                acs_status['inbound_calling_enabled'] = False
                 acs_status['source_number'] = source_number        
         
         return web.json_response(acs_status)
