@@ -141,16 +141,25 @@ function onCallButton() {
     const phonenumber = document.getElementById('phonenumber').value;
 
     const callDetails = {
-        number: phonenumber
+        target_number: phonenumber
     };
 
-
-    theUrl = window.location.href + "call";
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "POST", theUrl, false );
-    xmlHttp.send( callDetails );
-    
-    reportDiv.textContent = xmlHttp.responseText;   
+    fetch('/call', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(callDetails)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        statusMessage.textContent = data
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statusMessage.textContent = "Failed to create call"
+    });
 }
 
 toggleButton.addEventListener('click', onToggleListening);
@@ -282,3 +291,25 @@ function detectSpeech(inputData) {
     const rms = Math.sqrt(sumSquares / inputData.length);
     return rms > VAD_THRESHOLD;
 }
+
+window.onload = function() {
+    fetch('/status')
+        .then(response => response.text())
+        .then(data => 
+            {
+                json_data = JSON.parse(data)
+                if (json_data.outbound_calling_enabled){
+                    callButton.disabled = false;
+                    phonenumber.disabled = false;
+                    callButton.textContent = "Call me from the browser";
+                }
+                else
+                {
+                    callButton.textContent = "Outbound calling not possible";
+                }
+                statusMessage.textContent = json_data.status;
+                console.log(json_data);
+            }
+        )
+        .catch(error => console.error('Error:', error));
+};
