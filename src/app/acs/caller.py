@@ -1,4 +1,5 @@
-
+from aiohttp import web
+import json
 from logging import INFO
 from azure.eventgrid import EventGridEvent, SystemEventNames
 from azure.core.messaging import CloudEvent
@@ -15,6 +16,14 @@ from azure.communication.callautomation import (
     VoiceKind,
     FileSource,
     TextSource)
+from azure.communication.callautomation import (
+    MediaStreamingOptions,
+    AudioFormat,
+    MediaStreamingTransportType,
+    MediaStreamingContentType,
+    MediaStreamingAudioChannelType,
+    )
+from azure.communication.phonenumbers import PhoneNumbersClient,PhoneNumberCapabilityType, PhoneNumberAssignmentType, PhoneNumberType, PhoneNumberCapabilities
 import json
 import requests
 
@@ -24,19 +33,38 @@ class OutboundCall:
     acs_connection_string: str
     acs_callback_path: str
 
-    def __init__(self, target_number: str, source_number:str, acs_connection_string: str, acs_callback_path: str):
-        self.target_number = target_number
-        self.source_number = source_number
+    def __init__(self, acs_connection_string: str, acs_source_number: str, acs_callback_path: str):
         self.acs_connection_string = acs_connection_string
+        self.source_number = acs_source_number
         self.acs_callback_path = acs_callback_path
-    
-    async def call(self):
+
+    async def call(self, target_number: str):
         self.call_automation_client = CallAutomationClient.from_connection_string(self.acs_connection_string)
-        self.target_participant = PhoneNumberIdentifier(self.target_number)
+        self.target_participant = PhoneNumberIdentifier(target_number)
         self.source_caller = PhoneNumberIdentifier(self.source_number)
+
+        websocket_url = 'wss://' + self.acs_callback_path + '/realtime'
+
+        media_streaming_options = MediaStreamingOptions(
+                        transport_url=websocket_url,
+                        transport_type=MediaStreamingTransportType.WEBSOCKET,
+                        content_type=MediaStreamingContentType.AUDIO,
+                        audio_channel_type=MediaStreamingAudioChannelType.MIXED,
+                        start_media_streaming=True,
+                        enable_bidirectional=True,
+                        audio_format=AudioFormat.PCM24_K_MONO)
+
         call_connection_properties = self.call_automation_client.create_call(self.target_participant, 
-                                                                    self.acs_callback_path,
-                                                                    source_caller_id_number=self.source_caller)
+                                                                    'https://' + self.acs_callback_path + '/acs',
+                                                                    source_caller_id_number=self.source_caller,
+                                                                    media_streaming = media_streaming_options)
+        
+        call_connection = {
+            'call_established': True,
+            'connection_id': call_connection_properties.call_connection_id
+        }
+
+        return web.json_response(call_connection)
 
     async def _outbound_call_handler(self, request):
         print("Outbound call handler")
@@ -51,6 +79,16 @@ class OutboundCall:
             if event.type == "Microsoft.Communication.CallConnected":
                 print("Call connected")
                 print(call_connection_id)
+                call_connection_properties = call_connection_client.get_call_properties()
+                print(call_connection_properties)
+                media_streaming_subscription = call_connection_properties.media_streaming_subscription
+                print(media_streaming_subscription)
+                return web.Response(status=200)
+        
+        return web.Response(status=500)
+
+    async def _get_source_number(self):
+       return self.source_number
 
 
     def attach_to_app(self, app, path):
