@@ -28,6 +28,8 @@ async def create_app():
     credential = None
 
     cosmos: CosmosDBStore = None
+    caller: OutboundCall = None
+    
     if not llm_key:
         if tenant_id := os.environ.get("AZURE_TENANT_ID"):
             logger.info(

@@ -5,17 +5,8 @@ from azure.eventgrid import EventGridEvent, SystemEventNames
 from azure.core.messaging import CloudEvent
 from typing import List, Optional, Union, TYPE_CHECKING
 from azure.communication.callautomation import (
-    CallAutomationClient,
-    CallConnectionClient,
-    PhoneNumberIdentifier,
-    RecognizeInputType,
-    MicrosoftTeamsUserIdentifier,
-    CallInvite,
-    RecognitionChoice,
-    DtmfTone,
-    VoiceKind,
-    FileSource,
-    TextSource)
+    PhoneNumberIdentifier)
+from azure.communication.callautomation.aio import CallAutomationClient
 from azure.communication.callautomation import (
     MediaStreamingOptions,
     AudioFormat,
@@ -54,7 +45,7 @@ class OutboundCall:
                         enable_bidirectional=True,
                         audio_format=AudioFormat.PCM24_K_MONO)
 
-        call_connection_properties = self.call_automation_client.create_call(self.target_participant, 
+        call_connection_properties = await self.call_automation_client.create_call(self.target_participant, 
                                                                     'https://' + self.acs_callback_path + '/acs',
                                                                     source_caller_id_number=self.source_caller,
                                                                     media_streaming = media_streaming_options)
